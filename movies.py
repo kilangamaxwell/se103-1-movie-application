@@ -1,7 +1,8 @@
 import random
+import movie_storage as ms
 
 
-def my_moviesDB(movies_lst):
+def my_moviesDB():
     # Application's control Interface that allows user
     # selection of operations to run
 
@@ -26,79 +27,66 @@ def my_moviesDB(movies_lst):
     while choice not in choice_dict.keys():
         print(selections)
         choice = input("Enter choice (0-9): ")
-    choice_dict[choice](movies_lst)
+    choice_dict[choice]()
 
 
-def list_movies(movies_lst):
+def list_movies():
     """Displays the list of movies"""
+    movies = ms.list_movies()
     print()
-    print(f"  {len(movies_lst)} movies in total")
-    for movie in movies_lst:
+    print(f"  {len(movies)} movies in total")
+    for movie in movies:
         print(f"  {movie['Title']}: {movie['Rating']}")
     con = input("""
   Press enter to continue: """)
-    my_moviesDB(movies_lst)
+    my_moviesDB()
 
 
-def add_movie(movies_lst):
-    # Adds a new movie to the dictionary
+def add_movie():
+    """Adds a new movie to the dictionary"""
+    movies = ms.list_movies()
     new_movie = input("Enter new movie name: ")
-    for movie in movies_lst:
+    for movie in movies:
         if new_movie in movie.values():
             print(
                 f"Error: The movie {new_movie} already exists in the database.")
-            add_movie(movies_lst)
+            add_movie()
     rating = float(input("Enter new movie rating (1-10): "))
     release_year = float(input("Enter the movie's release year: "))
-    movies_lst.append(
-        {
-            "Title": new_movie,
-            "Rating": rating,
-            "Year": release_year
-        }
-    )
-    print(f"Movie {new_movie} successfully added")
-    print(" ")
+    ms.add_movie(new_movie, release_year, rating)
     con = input("""Press enter to continue: """)
-    my_moviesDB(movies_lst)
+    my_moviesDB()
 
 
-def del_movie(movies_lst):
+def del_movie():
     """ Deletes a movie from the database """
-    movie_name = input("Enter movie name to delete: ")
-    for i in range(len(movies_lst)):
-        if movies_lst[i]["Title"] == movie_name:
-            del movies_lst[i]
-            print(f"Movie {movie_name} successfully deleted")
-            return_to_menu(movies_lst)
-    print(f"Movie {movie_name} doesn't exist!")
-    return_to_menu(movies_lst)
+    title = input("Enter movie name to delete: ")
+    ms.delete_movie(title)
+    return_to_menu()
 
 
-def update_movie(movies_lst):
+def update_movie():
     # Updates the movie's rating
-    movie_name = input("Enter movie name: ")
-    # checks if movies exists in dictionary
-    for movie in movies_lst:
-        if movie['Title'] == movie_name:
+    movies = ms.list_movies()
+    title = input("Enter movie name: ")
+    # checks if movie exists in dictionary
+    for movie in movies:
+        if movie['Title'] == title:
             rating = float(input("Enter new movie rating (1-10): "))
-            movie['Rating'] = rating
-            print(f"Movie {movie_name} successfully updated")
-            return_to_menu(movies_lst)
-    print(f"Movie {movie_name} doesn't exist!")
-    con = input("Press enter to continue: ")
-    my_moviesDB(movies_lst)
+            ms.update_movie(title, rating)
+    return_to_menu()
 
 
-def return_to_menu(movies_lst):
+def return_to_menu():
     # Returns the app to the menu of operations
     print(" ")
     con = input("Press enter to continue: ")
-    my_moviesDB(movies_lst)
+    my_moviesDB()
 
 
-def check_stats(movies_lst):
+def check_stats():
     # Displays movie stats based on the ratings
+    movies_lst = ms.list_movies()
     avg_rating = 0
     sum_rating = 0
     median_rating = 0
@@ -139,30 +127,33 @@ def check_stats(movies_lst):
     print(f"Median rating: {median_rating}")
     print(f"Best movie: {best_movie}")
     print(f"Worst movie: {worst_movie}")
-    return_to_menu(movies_lst)
+    return_to_menu()
 
 
-def random_movie(movies_lst):
-    # selects a random movie from list of dictionary tuples
+def random_movie():
+    # selects a random movie from list of dictionary movies
+    movies_lst = ms.list_movies()
     rand_movie = random.choice(movies_lst)
     print(
         f"Your movie for tonight: {rand_movie['Title']}, it's rated {rand_movie['Rating']}")
-    return_to_menu(movies_lst)
+    return_to_menu()
 
 
-def search_movie(movies_lst):
+def search_movie():
     # searches for movie titles using full title or substrings
+    movies_lst = ms.list_movies()
     movie_name = input("Enter part of movie name: ").lower()
     for i in range(len(movies_lst)):
         name = movies_lst[i]['Title'].lower()
         rating = movies_lst[i]['Rating']
         if name.__contains__(movie_name):
             print(f"{movies_lst[i]['Title']}, {rating}")
-    return_to_menu(movies_lst)
+    return_to_menu()
 
 
-def sort_by_rating(movies_lst):
+def sort_by_rating():
     # sorts movie titles based on ratings in descending order
+    movies_lst = ms.list_movies()
     movie_ratings = []
     for movie in movies_lst:
         movie_ratings.append(movie['Rating'])
@@ -171,17 +162,17 @@ def sort_by_rating(movies_lst):
         for movie in movies_lst:
             if movie['Rating'] == rating:
                 print(f"{movie['Title']}: {movie['Rating']}")
-    return_to_menu(movies_lst)
+    return_to_menu()
 
 
-def exit_movies(movies_lst):
+def exit_movies():
     stop = 1
     print("Bye!")
     return stop
 
 
-def generate_website(movies_lst):
-    return_to_menu(movies_lst)
+def generate_website():
+    return_to_menu()
 
 
 choice_dict = {
@@ -199,27 +190,8 @@ choice_dict = {
 
 
 def main():
-    # Dictionary to store the movies and the rating
-    movies = [
-        {
-            "Title": "In the Name of the Father",
-            "Rating": 8.1,
-            "Year": 1993
-        },
-        {
-            "Title": "Titanic",
-            "Rating": 7.9,
-            "Year": 1997
-        },
-        {
-            "Title": "Deadpool",
-            "Rating": 8.0,
-            "Year": 2016
-        }
-    ]
-
     # Your code here
-    my_moviesDB(movies)
+    my_moviesDB()
 
 
 if __name__ == "__main__":
