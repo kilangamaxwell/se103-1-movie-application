@@ -10,14 +10,26 @@ def read_html(html_file):
     """Reads a html file returns the data as a string."""
     with open(html_file, "r") as file:
         data = file.read()
-        return data
+    return data
 
 
 def serialize_movie(movie_dict):
     """Provides template for serializing a movie object"""
     output = ''
-    output += '<li>\n<div class="movie">\n<img class="movie-poster"\n'
-    output += f'src={movie_dict["Poster"]}\ntitle=""/>\n'
+    output += '<li>\n<div class="movie">\n'
+    if "imdb Link" in movie_dict:
+        output += f'<a href="{movie_dict["imdb Link"]}" target="_blank">\n'
+        output += f'<img class="movie-poster"\n'
+        output += f'src="{movie_dict["Poster"]}"\ntitle=""/></a>\n'
+    else:
+        output += '<img class="movie-poster"\n'
+        output += f'src="{movie_dict["Poster"]}"\ntitle=""/>\n'
+    if "Notes" in movie_dict:
+        output += '<div class="movie-notes-box">'
+        for notes in movie_dict["Notes"]:
+            output += f'<p>{notes}</p>\n'
+            countries = movie_dict["Country"]
+        output += '</div>\n'
     output += f'<div class="movie-title">{movie_dict["Title"]}</div>\n'
     output += f'<div class="movie-year">{movie_dict["Year"]}</div>\n'
     output += f'<div class="movie-rating">{movie_dict["Rating"]}</div>\n'
@@ -27,7 +39,7 @@ def serialize_movie(movie_dict):
 
 def display_movies():
     """Creates a string containing the title, rating,
-     release year and poster
+      release year and poster
     derived from the api."""
     movies = ms.list_movies()
     # define an empty string
@@ -70,9 +82,9 @@ def list_movies():
     """Displays the list of movies"""
     movies = ms.list_movies()
     print()
-    print(f"  {len(movies)} movies in total")
+    print(f"{len(movies)} movies in total")
     for movie in movies:
-        print(f"  {movie['Title']}: {movie['Rating']}")
+        print(f"{movie['Title']}: {movie['Rating']}")
     con = input("""
   Press enter to continue: """)
     my_moviesDB()
@@ -100,14 +112,16 @@ def del_movie():
 
 
 def update_movie():
-    """Updates the movie's rating"""
+    """Updates the movie's notes"""
     movies = ms.list_movies()
     title = input("Enter movie name: ")
     # checks if movie exists in dictionary
     for movie in movies:
         if movie['Title'] == title:
-            rating = float(input("Enter new movie rating (1-10): "))
-            ms.update_movie(title, rating)
+            notes_lst = []
+            notes = input("Enter movie notes: ")
+            notes_lst.append(notes)
+            ms.update_movie(title, notes_lst)
     return_to_menu()
 
 
@@ -201,16 +215,14 @@ def sort_by_rating():
 
 def exit_movies():
     """Exits the application"""
-    stop = 1
     print("Bye!")
-    return stop
 
 
 def generate_website():
     """Generates website from list of movies in the database."""
     html_data = read_html(FILE_HTML)
     # replace text placeholder with json data
-    html_data = html_data.replace("__TEMPLATE_TITLE__", "My OMDB Movie App")
+    html_data = html_data.replace("__TEMPLATE_TITLE__", "OMDB Movie App")
     html_data = html_data.replace("__TEMPLATE_MOVIE_GRID__", display_movies())
     # write html_data to a new file
     with codecs.open(MOVIE_HTML, "w", encoding="utf-8") as file:

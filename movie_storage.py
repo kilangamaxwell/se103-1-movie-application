@@ -1,5 +1,6 @@
 import json
 import requests
+from bs4 import BeautifulSoup
 
 JSON_FILE = "OMDB_movies.json"
 API_KEY = "d4ba49c2"
@@ -27,10 +28,11 @@ def list_movies():
     """
     with open(JSON_FILE, "r") as jfile:
         movies_lst = json.load(jfile)
-        return movies_lst
+    return movies_lst
 
 
 def save_db(movies):
+    """Saves the list of movies to a json file."""
     saved = 0
     moviesdb = json.dumps(movies)
     with open(JSON_FILE, "w") as jfile:
@@ -39,13 +41,26 @@ def save_db(movies):
     return saved
 
 
-def add_movie(title):
-    """
-    Adds a movie to the movies database.
-    Loads the information from the JSON file, add the movie,
-    and saves it. The function doesn't need to validate the input.
-    """
-    movies = list_movies()
+def find_imdb_link():
+    """Retrieves link to imdb page for each movie."""
+    url = 'https://imdb.com/chart/top'
+    response = requests.get(url)
+    content = response.content
+    soup = BeautifulSoup(content, 'html5lib')
+    movie_tags = soup.find_all('td', class_='titleColumn')
+    movies_tl = []
+    for tag in movie_tags:
+        title = tag.find('a').text
+        link = 'https://imdb.com' + tag.find('a')['href']
+        movies_tl.append({
+            'Title': title,
+            'link': link
+        })
+    return movies_tl
+
+
+def find_movie_in_api(title):
+    """Retrieves movie info from the OMDB api."""
     response = requests.get(URL+title)
     try:
         response = requests.get(URL+title)
@@ -60,14 +75,49 @@ def add_movie(title):
         print("Something went wrong:", err)
     if response.status_code == requests.codes.ok:
         data = response.json()
-    movies.append({
-        'Title': data['Title'],
-        'Rating': data['imdbRating'],
-        'Year': data['Year'],
-        'Poster': data['Poster']
-    })
-    save_db(movies)
-    print(f"Movie {title} successfully added")
+    return data
+
+
+def add_movie(title):
+    """
+    Adds a movie to the movies database.
+    Loads the information from the JSON file, add the movie,
+    and saves it. The function doesn't need to validate the input.
+    """
+    movies = list_movies()
+    data = find_movie_in_api(title)
+    movies_tl = find_imdb_link()
+    imdbLink = ""
+    if data['Country'].__contains__(","):
+        country = data['Country'].split(",")
+    else:
+        country = [data['Country']]
+    for mvs in movies_tl:
+        if title in mvs['Title']:
+            imdbLink = mvs['link']
+    if len(imdbLink) > 0:
+        movies.append({
+            'Title': data['Title'],
+            'Rating': data['imdbRating'],
+            'Year': data['Year'],
+            'Poster': data['Poster'],
+            'imdb Link': imdbLink,
+            'Notes': [data['Plot']],
+            'Country': country
+        })
+        save_db(movies)
+        print(f"Movie {title} successfully added")
+    else:
+        print("Movie not in imdb top 250")
+        movies.append({
+            'Title': data['Title'],
+            'Rating': data['imdbRating'],
+            'Year': data['Year'],
+            'Poster': data['Poster'],
+            'Country': country
+        })
+        save_db(movies)
+        print(f"Movie {title} successfully added")
     print(" ")
 
 
@@ -89,16 +139,16 @@ def delete_movie(title):
         print(f"Movie {title} doesn't exist!")
 
 
-def update_movie(title, rating):
+def update_movie(title, notes):
     """
-    Updates a movie from the movies database.
+    Updates notes about a movie in the database.
     Loads the information from the JSON file, updates the movie,
     and saves it. The function doesn't need to validate the input.
     """
     movies = list_movies()
     for movie in movies:
         if movie['Title'] == title:
-            movie['Rating'] = rating
+            movie['Notes'] = notes
             s = save_db(movies)
             if s == 1:
                 print(f"Movie {title} successfully updated")
